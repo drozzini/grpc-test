@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-server-teste
+  namespace: grpc-teste
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grpc-server-teste
+  template:
+    metadata:
+      labels:
+        app: grpc-server-teste
+    spec:
+      containers:
+      - name: grpc-server-teste
+        image: grpc-server:latest
+        ports:
+        - containerPort: 50051
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: SERVER_PORT
+          value: "50051"
+        - name: KEEPALIVE_ENABLED
+          value: "true"
+        - name: KEEPALIVE_TIME_MS
+          value: "10000"
+        - name: KEEPALIVE_TIMEOUT_MS
+          value: "5000"
+        - name: KEEPALIVE_PERMIT_WITHOUT_CALLS
+          value: "true"
+        - name: HTTP2_MAX_PINGS_WITHOUT_DATA
+          value: "2"
+        - name: HTTP2_MIN_TIME_BETWEEN_PINGS_MS
+          value: "10000"
+        - name: HTTP2_MIN_PING_INTERVAL_WITHOUT_DATA_MS
+          value: "5000"
+        - name: SLEEP_TIME
+          value: "86400"
