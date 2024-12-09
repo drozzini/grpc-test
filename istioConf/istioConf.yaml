@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-teste-egress-vs
+  namespace: grpc-teste
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: grpc-50050
+      port: 50050
+      protocol: TCP
+      targetPort: 50050
+  sessionAffinity: None
+  type: ClusterIP
+
+--- 
+
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: grpc-teste-grpc-dr
+  namespace: grpc-teste
+spec:
+  host: grpc-teste-egress-vs
+  trafficPolicy:
+    connectionPool:
+      http:
+        idleTimeout: 5m
+        maxRetries: 1
+      tcp:
+        connectTimeout: 300ms
+        idleTimeout: 5m
+        maxConnections: 100
+    loadBalancer:
+      simple: ROUND_ROBIN
+    outlierDetection:
+      baseEjectionTime: 300s
+      consecutive5xxErrors: 2
+      interval: 60s
+      maxEjectionPercent: 100
+
+--- 
+
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: grpc-teste-grpc-vs
+  namespace: grpc-teste
+spec:
+  hosts:
+    - grpc-teste-egress-vs
+  tcp:
+    - match:
+        - port: 50050
+      route:
+        - destination:
+            host: grpc-teste-egress-vs
+            port:
+              number: 50050
+
+--- 
+
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: grpc-teste-grpc-se
+  namespace: grpc-teste
+spec:
+  addresses:
+    - 10.10.10.10
+    - 10.10.10.11
+  endpoints:
+    - address: 10.10.10.10
+    - address: 10.10.10.11
+  hosts:
+    - grpc-teste-egress-vs
+  location: MESH_EXTERNAL
+  ports:
+    - name: grpc
+      number: 50050
+      protocol: GRPC
+  resolution: STATIC
