@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-client-deployment
+  namespace: grpc
+  labels:
+    app: grpc-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grpc-client
+  template:
+    metadata:
+      labels:
+        app: grpc-client
+    spec:
+      containers:
+      - name: grpc-client
+        image: crshdbrselobr01.azurecr.io/tcpdump:grpc-client-128419
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 50051
+        env:
+        - name: GRPC_SERVER_HOST
+          value: "grpc-server-service" # Nome do serviço no cluster
+        - name: GRPC_SERVER_PORT
+          value: "50051"
+        - name: ENABLE_KEEPALIVE
+          value: "true"
+        - name: KEEPALIVE_TIME_MS
+          value: "30000"
+        - name: KEEPALIVE_TIMEOUT_MS
+          value: "10000"
+        - name: REQUEST_INTERVAL
+          value: "5"
+        - name: REQUEST_NAME
+          value: "K8sClient"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
